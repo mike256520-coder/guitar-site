@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<!-- 
+damie
+ANE0N-LZ7HA-9Y4IT-DBKA3-K7NIQ
+上傳步驟
+
+把 002.html 拖拉到 /var/www/mysite/
+
+確認 pic02/ 資料夾也在
+/var/www/mysite/pic02/，裡面放好 pic_01.jpg ～ pic_10.jpg
+做一個網頁,有關於吉他教學要活潑有趣可愛,令人注目一看再看,共十張相片,相片右方有文字欄以說明圖片,並允許使用者更改內容,圖片點下去可以全螢幕放大,而圖片放在pic02資料夾下,檔名為pic_01.pic_02....到pic_10,全部圖片的最下方還有文字欄可供輸入表達看法
+功能說明
+功能說明✏️ 可編輯標題每張圖片上方的標題點一下可直接改📝 可編輯說明右側文字框可自由修改內容🔍 點圖放大點圖片全螢幕，← → 鍵切換，Esc 關閉💬 學習心得欄最底部，可輸入並儲存心得（存在瀏覽器）✨ 卡片滑入動畫滾動頁面時卡片逐一飛入
+-->
+
+
+
+
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🎸 吉他教學趣 · Guitar Fun!</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --yellow:  #FFD93D;
+      --orange:  #FF6B35;
+      --pink:    #FF6B9D;
+      --teal:    #4ECDC4;
+      --purple:  #A855F7;
+      --green:   #6BCB77;
+      --blue:    #4D96FF;
+      --cream:   #FFFBF0;
+      --dark:    #1A1A2E;
+      --card-bg: #ffffff;
+      --shadow:  0 8px 32px rgba(0,0,0,0.10);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Nunito', 'Noto Sans TC', sans-serif;
+      background: var(--cream);
+      color: var(--dark);
+      overflow-x: hidden;
+    }
+
+    /* ─── ANIMATED BG BLOBS ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 600px 400px at 10% 20%, rgba(255,217,61,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 500px at 85% 10%, rgba(255,107,157,0.15) 0%, transparent 70%),
+        radial-gradient(ellipse 700px 400px at 60% 90%, rgba(78,205,196,0.15) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 56px 24px 40px;
+    }
+
+    .sticker-row {
+      font-size: 2.4rem;
+      margin-bottom: 12px;
+      animation: bounce-row 2s ease-in-out infinite;
+      display: block;
+    }
+
+    @keyframes bounce-row {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+
+    h1 {
+      font-size: clamp(2.4rem, 7vw, 5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      position: relative;
+      display: inline-block;
+    }
+
+    h1 .word-1 { color: var(--orange); -webkit-text-stroke: 2px var(--dark); }
+    h1 .word-2 { color: var(--pink);   -webkit-text-stroke: 2px var(--dark); }
+    h1 .word-3 { color: var(--teal);   -webkit-text-stroke: 2px var(--dark); }
+
+    .tagline {
+      margin-top: 14px;
+      font-size: 1.05rem;
+      color: #666;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .badge-row {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border: 2px solid currentColor;
+    }
+
+    .badge-1 { color: var(--orange); background: rgba(255,107,53,0.1); }
+    .badge-2 { color: var(--purple); background: rgba(168,85,247,0.1); }
+    .badge-3 { color: var(--teal);   background: rgba(78,205,196,0.1); }
+    .badge-4 { color: var(--pink);   background: rgba(255,107,157,0.1); }
+
+    /* ─── SECTION LABEL ─── */
+    .section-label {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 40px;
+      margin-bottom: 28px;
+    }
+
+    .section-label span {
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--orange);
+      white-space: nowrap;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 3px;
+      background: repeating-linear-gradient(90deg, var(--yellow) 0px, var(--yellow) 8px, transparent 8px, transparent 14px);
+      border-radius: 2px;
+    }
+
+    /* ─── LESSON CARDS ─── */
+    .lessons {
+      position: relative;
+      z-index: 1;
+      padding: 0 32px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      border: 3px solid transparent;
+      display: flex;
+      gap: 0;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.14);
+    }
+
+    /* alternating accent borders */
+    .card:nth-child(1)  { border-color: var(--yellow);  }
+    .card:nth-child(2)  { border-color: var(--pink);    }
+    .card:nth-child(3)  { border-color: var(--teal);    }
+    .card:nth-child(4)  { border-color: var(--purple);  }
+    .card:nth-child(5)  { border-color: var(--orange);  }
+    .card:nth-child(6)  { border-color: var(--green);   }
+    .card:nth-child(7)  { border-color: var(--blue);    }
+    .card:nth-child(8)  { border-color: var(--yellow);  }
+    .card:nth-child(9)  { border-color: var(--pink);    }
+    .card:nth-child(10) { border-color: var(--teal);    }
+
+    .card-num {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: #fff;
+      z-index: 2;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .card:nth-child(1)  .card-num { background: var(--yellow); color: var(--dark); }
+    .card:nth-child(2)  .card-num { background: var(--pink);   }
+    .card:nth-child(3)  .card-num { background: var(--teal);   }
+    .card:nth-child(4)  .card-num { background: var(--purple); }
+    .card:nth-child(5)  .card-num { background: var(--orange); }
+    .card:nth-child(6)  .card-num { background: var(--green);  }
+    .card:nth-child(7)  .card-num { background: var(--blue);   }
+    .card:nth-child(8)  .card-num { background: var(--yellow); color: var(--dark); }
+    .card:nth-child(9)  .card-num { background: var(--pink);   }
+    .card:nth-child(10) .card-num { background: var(--teal);   }
+
+    /* photo side */
+    .card-photo {
+      flex: 0 0 340px;
+      position: relative;
+      cursor: zoom-in;
+      overflow: hidden;
+    }
+
+    @media (max-width: 720px) {
+      .card { flex-direction: column; }
+      .card-photo { flex: 0 0 auto; height: 240px; }
+    }
+
+    .card-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
+    }
+
+    .card-photo:hover img { transform: scale(1.06); }
+
+    .zoom-hint {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: rgba(255,255,255,0.92);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--dark);
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .card-photo:hover .zoom-hint { opacity: 1; }
+
+    /* text side */
+    .card-body {
+      flex: 1;
+      padding: 28px 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card-emoji {
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    .card-title-input {
+      font-family: 'Nunito', 'Noto Sans TC', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--dark);
+      border: none;
+      border-bottom: 2.5px dashed #ddd;
+      background: transparent;
+      width: 100%;
+      padding: 4px 0;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .card-title-input:focus { border-color: var(--orange); }
+
+    .card-desc {
+      font-family: 'Nunito', 'Noto Sans TC', sans-serif;
+      font-size: 0.93rem;
+      line-height: 1.75;
+      color: #444;
+      border: 2px dashed #e0e0e0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: #fafafa;
+      resize: vertical;
+      min-height: 110px;
+      flex: 1;
+      outline: none;
+      transition: border-color 0.25s, background 0.25s;
+      font-weight: 500;
+    }
+
+    .card-desc:focus {
+      border-color: var(--teal);
+      background: #f0fffe;
+    }
+
+    .edit-hint {
+      font-size: 0.72rem;
+      color: #bbb;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    /* ─── COMMENT SECTION ─── */
+    .comment-section {
+      position: relative;
+      z-index: 1;
+      margin: 40px 32px 24px;
+      background: var(--card-bg);
+      border-radius: 24px;
+      border: 3px solid var(--yellow);
+      box-shadow: var(--shadow);
+      padding: 32px;
+    }
+
+    .comment-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .comment-header .icon { font-size: 2rem; }
+
+    .comment-header h2 {
+      font-size: 1.3rem;
+      font-weight: 900;
+      color: var(--dark);
+    }
+
+    .comment-header p {
+      font-size: 0.82rem;
+      color: #888;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .comment-box {
+      font-family: 'Nunito', 'Noto Sans TC', sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.8;
+      color: var(--dark);
+      border: 2.5px dashed #ddd;
+      border-radius: 16px;
+      padding: 16px 18px;
+      background: #fffbf0;
+      resize: vertical;
+      min-height: 140px;
+      width: 100%;
+      outline: none;
+      font-weight: 500;
+      transition: border-color 0.25s, background 0.25s;
+    }
+
+    .comment-box:focus {
+      border-color: var(--yellow);
+      background: #fffde8;
+    }
+
+    .comment-box::placeholder { color: #ccc; }
+
+    .comment-actions {
+      margin-top: 14px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 10px 24px;
+      border-radius: 999px;
+      border: none;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+    .btn:active { transform: translateY(0); }
+
+    .btn-clear { background: #f0f0f0; color: #888; }
+    .btn-save  { background: var(--orange); color: #fff; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 24px;
+      font-size: 0.82rem;
+      color: #bbb;
+      font-weight: 600;
+    }
+
+    /* ─── LIGHTBOX ─── */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(26,26,46,0.92);
+      backdrop-filter: blur(16px);
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+
+    .lightbox.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .lb-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      max-width: 92vw;
+    }
+
+    .lightbox img {
+      max-width: 78vw;
+      max-height: 86vh;
+      border-radius: 16px;
+      object-fit: contain;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+      transform: scale(0.92);
+      transition: transform 0.35s ease;
+    }
+
+    .lightbox.open img { transform: scale(1); }
+
+    .lb-nav {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .lb-nav:hover { background: var(--orange); transform: scale(1.08); }
+
+    .lb-close {
+      position: absolute;
+      top: -52px;
+      right: 0;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .lb-close:hover { background: var(--pink); }
+
+    .lb-info {
+      position: absolute;
+      bottom: -44px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.6);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+
+    /* ─── SAVE TOAST ─── */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--dark);
+      color: #fff;
+      padding: 12px 28px;
+      border-radius: 999px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 9999;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* card fade-in */
+    .card {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.55s ease, transform 0.55s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+    .card.visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <span class="sticker-row">🎸 🎵 🎶 🎼 🎤</span>
+  <h1>
+    <span class="word-1">吉他</span>
+    <span class="word-2">教學</span>
+    <span class="word-3">趣！</span>
+  </h1>
+  <p class="tagline">✨ 從零開始，輕鬆彈出你的第一首歌 ✨</p>
+  <div class="badge-row">
+    <span class="badge badge-1">🎸 初學友善</span>
+    <span class="badge badge-2">💜 圖解說明</span>
+    <span class="badge badge-3">🎵 互動筆記</span>
+    <span class="badge badge-4">🌟 點圖放大</span>
+  </div>
+</header>
+
+<!-- SECTION LABEL -->
+<div class="section-label">
+  <span>📸 教學圖解 · 10 堂課</span>
+</div>
+
+<!-- LESSON CARDS -->
+<div class="lessons" id="lessons">
+
+  <div class="card">
+    <div class="card-num">1</div>
+    <div class="card-photo" onclick="openLB(0)">
+      <img src="pic02/pic_01.jpg" alt="第1課"/>
+      <div class="zoom-hint">🔍 點擊放大</div>
+    </div>
+    <div class="card-body">
+      <div class="card-emoji">🎸</div>
+      <input class="card-title-input" value="第 1 課：認識吉他各部位" placeholder="輸入課程標題…"/>
+      <textarea class="card-desc" placeholder="在這裡輸入圖片說明…">吉他由琴頭、琴頸、琴身三大部分組成。琴頭上有弦鈕可調音，琴頸上有琴格方便按弦，琴身負責共鳴發聲。先認識它，才能愛上它！🎶</textarea>
+      <span class="edit-hint">✏️ 點擊標題或說明可直接編輯</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-num">2</div>
+    <div class="card-photo" onclick="openLB(1)">
+      <img src="pic02/pic_02.jpg" alt="第2課"/>
+      <div class="zoom-hint">🔍 點擊放大</div>
+    </div>
+    <div class="card-body">
+      <div class="card-emoji">🤲</div>
+      <input class="card-title-input" value="第 2 課：正確持琴姿勢" placeholder="輸入課程標題…"/>
+      <textarea class="card-desc" placeholder="在這裡輸入圖片說明…">良好的姿勢是學好吉他的第一步！坐姿要端正，吉他靠在右大腿上，琴頸稍微朝上傾斜。記得放鬆肩膀，不要聳肩哦～😊</textarea>
+      <span class="edit-hint">✏️ 點擊標題或說明可直接編輯</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-num">3</div>
+    <div class="card-photo" onclick="openLB(2)">
+      <img src="pic02/pic_03.jpg" alt="第3課"/>
+      <div class="zoom-hint">🔍 點擊放大</div>
+    </div>
+    <div class="card-body">
+      <div class="card-emoji">🎵</div>
+      <input class="card-title-input" value="第 3 課：六條弦的名稱與音名" placeholder="輸入課程標題…"/>
+      <textarea class="card-desc" placeholder="在這裡輸入圖片說明…">從最粗到最細：E A D G B E。可以用口訣記憶：「愛（A）大（D）叔（G）貝（B）爾（E）！」六弦識清楚，調音沒問題 🎼</textarea>
+      <span class="edit-hint">✏️ 點擊標題或說明可直接編輯</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-num">4</div>
+    <div class="card-photo" onclick="openLB(3)">
+      <img src="pic02/pic_04.jpg" alt="第4課"/>
+      <div class="zoom-hint">🔍 點擊放大</div>
+    </div>
+    <div class="card-body">
+      <div class="card-emoji">🔧</div>
+      <input class="card-title-input" value="第 4 課：如何調音" placeholder="輸入課程標題…"/>
+      <textarea class="card-desc" placeholder="在這裡輸入圖片說明…">調音是每次練習前的必做功課！推薦使用 App 或夾式調音器，對著標準音調整弦鈕，讓指針指向正中間的綠色就 OK 啦！🎯</textarea>
+      <span class="edit-hint">✏️ 點擊標題或說明可直接編輯</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-num">5</div>
+    <div class="card-photo" onclick="openLB(4)">
+      <img src="pic02/pic_05.jpg" alt="第5課"/>
+      <div class="zoom-hint">🔍 點擊放大</div>
+    </div>
+    <div class="card-body">
+      <div class="card-emoji">☝️</div>
+      <input class="card-title-input" value="第 5 課：左手按弦技巧" placeholder="輸入課程標題…"/>
+      <textarea class="card-desc" placeholder="在這裡輸入圖片說明…">用指尖靠近琴格按弦，手腕保持放鬆。大拇指輕放琴頸背面，不要握拳！一開始指尖會痛是正常的，練一陣子就會長繭，沒有關係 💪</textarea>
+      <span class="edit-hint">✏️ 點擊標題或說明可直接編輯</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-num">6</div>
+    <div class="card-photo" onclick="openLB(5)">
+      <img src="pic02/pic_06.jpg" alt="第6課"/>
+      <div class="zoom-hint">🔍 點擊放大</div>
+    </div>
+    <div class="card-body">
+      <div class="card-emoji">🎼</div>
+      <input class="card-title-input" value="第 6 課：右手撥弦與刷弦" placeholder="輸入課程標題…"/>
+      <textarea class="card-desc" placeholder="在這裡輸入圖片說明…">右手可用撥片或手指撥弦。刷弦時手腕放鬆，從手腕帶動動作。往下刷為強拍，往上刷為弱拍，節奏穩定才是關鍵！🥁</textarea>
+      <span class="edit-hint">✏️ 點擊標題或說明可直接編輯</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-num">7</div>
+    <div class="card-photo" onclick="openLB(6)">
+      <img src="pic02/pic_07.jpg" alt="第7課"/>
+      <div class="zoom-hint">🔍 點擊放大</div>
+    </div>
+    <div class="card-body">
+      <div class="card-emoji">🅰️</div>
+      <input class="card-title-input" value="第 7 課：第一個和弦 Am" placeholder="輸入課程標題…"/>
+      <textarea class="card-desc" placeholder="在這裡輸入圖片說明…">Am 是最容易入門的和弦之一！只需三根手指：食指按2弦1格、中指按4弦2格、無名指按3弦2格。按好後輕輕刷，聽聽看有沒有雜音！✨</textarea>
+      <span class="edit-hint">✏️ 點擊標題或說明可直接編輯</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-num">8</div>
+    <div class="card-photo" onclick="openLB(7)">
+      <img src="pic02/pic_08.jpg" alt="第8課"/>
+      <div class="zoom-hint">🔍 點擊放大</div>
+    </div>
+    <div class="card-body">
+      <div class="card-emoji">🔄</div>
+      <input class="card-title-input" value="第 8 課：和弦換弦練習" placeholder="輸入課程標題…"/>
+      <textarea class="card-desc" placeholder="在這裡輸入圖片說明…">學會幾個和弦後，最重要的就是練習「流暢換弦」。建議先慢速練習，用節拍器控制速度，讓肌肉記憶動作，再漸漸加快！🚀</textarea>
+      <span class="edit-hint">✏️ 點擊標題或說明可直接編輯</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-num">9</div>
+    <div class="card-photo" onclick="openLB(8)">
+      <img src="pic02/pic_09.jpg" alt="第9課"/>
+      <div class="zoom-hint">🔍 點擊放大</div>
+    </div>
+    <div class="card-body">
+      <div class="card-emoji">📖</div>
+      <input class="card-title-input" value="第 9 課：如何看和弦譜" placeholder="輸入課程標題…"/>
+      <textarea class="card-desc" placeholder="在這裡輸入圖片說明…">和弦圖就是吉他指板的示意圖，縱線是弦、橫線是格。圓點代表要按的位置，X 是不撥，O 是空弦。看懂它，世界上所有歌都是你的！🌍</textarea>
+      <span class="edit-hint">✏️ 點擊標題或說明可直接編輯</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-num">10</div>
+    <div class="card-photo" onclick="openLB(9)">
+      <img src="pic02/pic_10.jpg" alt="第10課"/>
+      <div class="zoom-hint">🔍 點擊放大</div>
+    </div>
+    <div class="card-body">
+      <div class="card-emoji">🌟</div>
+      <input class="card-title-input" value="第 10 課：彈奏第一首完整歌曲！" placeholder="輸入課程標題…"/>
+      <textarea class="card-desc" placeholder="在這裡輸入圖片說明…">恭喜你完成基礎課程！現在試著彈一首完整的歌吧！推薦從「小星星」或「生日快樂」開始，簡單又有成就感。你已經是吉他手了！🎉🎸</textarea>
+      <span class="edit-hint">✏️ 點擊標題或說明可直接編輯</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- COMMENT SECTION -->
+<div class="comment-section">
+  <div class="comment-header">
+    <span class="icon">💬</span>
+    <div>
+      <h2>你的學習心得</h2>
+      <p>學了什麼？有什麼感想？寫下來分享吧！</p>
+    </div>
+  </div>
+  <textarea class="comment-box" id="commentBox" placeholder="例如：今天終於學會換弦了，雖然手指很痛但好有成就感！🎸✨ 下次要練習 C 和弦…"></textarea>
+  <div class="comment-actions">
+    <button class="btn btn-clear" onclick="clearComment()">🗑️ 清除</button>
+    <button class="btn btn-save"  onclick="saveComment()">💾 儲存心得</button>
+  </div>
+</div>
+
+<footer>
+  🎸 吉他教學趣 · 用愛彈出每一個音符 · Powered by nginx 🎵
+</footer>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLBOutside(event)">
+  <div class="lb-wrap">
+    <button class="lb-close" onclick="closeLB()">✕</button>
+    <button class="lb-nav" onclick="prevLB()">◀</button>
+    <div style="position:relative;">
+      <img id="lb-img" src="" alt=""/>
+      <div class="lb-info" id="lb-info"></div>
+    </div>
+    <button class="lb-nav" onclick="nextLB()">▶</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">💾 已儲存！</div>
+
+
+
+<!-- 引入 Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<!-- 初始化 -->
+<script>
+const firebaseConfig = {
+ apiKey: "AIzaSyBhFLsAtsFuPem7bEjdlbjaX71n1_3aFMU",
+ authDomain: "guitar-site-16251.firebaseapp.com",
+ projectId: "guitar-site-16251"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+</script>
+
+
+<script>
+// ── 載入資料 ──
+async function loadData() {
+ const doc = await db.collection("guitar").doc("main").get();
+ const data = doc.data();
+
+ if (!data) return;
+
+ document.querySelectorAll('.card').forEach((card, i) => {
+   if (data.cards && data.cards[i]) {
+     card.querySelector('.card-title-input').value = data.cards[i].title;
+     card.querySelector('.card-desc').value = data.cards[i].desc;
+   }
+ });
+
+ if (data.comment) {
+   document.getElementById('commentBox').value = data.comment;
+ }
+}
+
+
+// ── 儲存單張卡片 ──
+function attachCardSave() {
+ document.querySelectorAll('.card').forEach((card, i) => {
+   const titleInput = card.querySelector('.card-title-input');
+   const descArea   = card.querySelector('.card-desc');
+
+   [titleInput, descArea].forEach(el => {
+     el.addEventListener('blur', async () => {
+
+       const doc = await db.collection("guitar").doc("main").get();
+       let data = doc.data() || {};
+       data.cards = data.cards || [];
+
+       data.cards[i] = {
+         title: titleInput.value,
+         desc: descArea.value
+       };
+
+       await db.collection("guitar").doc("main").set(data);
+
+       showToast('☁️ 已同步到雲端！');
+     });
+   });
+ });
+}
+
+
+// ── 儲存心得 ──
+async function saveComment() {
+ const doc = await db.collection("guitar").doc("main").get();
+ let data = doc.data() || {};
+
+ data.comment = document.getElementById('commentBox').value;
+
+ await db.collection("guitar").doc("main").set(data);
+
+ showToast('☁️ 心得已雲端同步！');
+}
+
+//---多人同步--------
+db.collection("guitar").doc("main")
+ .onSnapshot((doc) => {
+   const data = doc.data();
+   if (!data) return;
+
+   document.querySelectorAll('.card').forEach((card, i) => {
+     if (data.cards && data.cards[i]) {
+       card.querySelector('.card-title-input').value = data.cards[i].title;
+       card.querySelector('.card-desc').value = data.cards[i].desc;
+     }
+   });
+
+   if (data.comment) {
+     document.getElementById('commentBox').value = data.comment;
+   }
+ });
+
+
+// ── LIGHTBOX ──
+const images = [
+  'pic02/pic_01.jpg','pic02/pic_02.jpg','pic02/pic_03.jpg','pic02/pic_04.jpg','pic02/pic_05.jpg',
+  'pic02/pic_06.jpg','pic02/pic_07.jpg','pic02/pic_08.jpg','pic02/pic_09.jpg','pic02/pic_10.jpg'
+];
+const titles = ['第1課','第2課','第3課','第4課','第5課','第6課','第7課','第8課','第9課','第10課'];
+let cur = 0;
+
+function openLB(i) {
+  cur = i;
+  document.getElementById('lb-img').src = images[cur];
+  document.getElementById('lb-info').textContent = titles[cur] + '  ·  ' + (cur+1) + ' / ' + images.length;
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLB() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeLBOutside(e) {
+  if (e.target === document.getElementById('lightbox')) closeLB();
+}
+function nextLB() {
+  cur = (cur + 1) % images.length;
+  document.getElementById('lb-img').src = images[cur];
+  document.getElementById('lb-info').textContent = titles[cur] + '  ·  ' + (cur+1) + ' / ' + images.length;
+}
+function prevLB() {
+  cur = (cur - 1 + images.length) % images.length;
+  document.getElementById('lb-img').src = images[cur];
+  document.getElementById('lb-info').textContent = titles[cur] + '  ·  ' + (cur+1) + ' / ' + images.length;
+}
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lightbox').classList.contains('open')) return;
+  if (e.key === 'ArrowRight') nextLB();
+  if (e.key === 'ArrowLeft')  prevLB();
+  if (e.key === 'Escape')     closeLB();
+});
+
+// ── 卡片淡入 ──
+const cards = document.querySelectorAll('.card');
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+cards.forEach(c => io.observe(c));
+
+// ── Toast ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ── 啟動 ──
+loadData();
+attachCardSave();
+</script>
+</body>
+</html>
