@@ -1,6 +1,7 @@
-# guitar-site
-
-# https://mike256520-coder.github.io/guitar-site/
+# guitar-site:
+https://mike256520-coder.github.io/guitar-site/
+#音樂筆記:
+https://mike256520-coder.github.io/guitar-site/music-note/
 
 # 功能說明：
 ?? 可編輯標題  ?? 可編輯說明  ?? 點圖放大（← → Esc）
