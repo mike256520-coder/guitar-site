@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<!-- damie 
+         ANE0N-LZ7HA-9Y4IT-DBKA3-K7NIQ -->
+<!-- ai對話 https://gemini.google.com/share/6ab2179aeada
+                     https://gemini.google.com/share/5873945bfcc1-->
+<!-- 資料庫規則:
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.time < timestamp.date(2026, 5, 17);
+    }
+  }
+}
+-->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的音樂學習筆記本</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <style>
+        /* 🎨 完整的 CSS 介面樣式 */
+        :root { --p-color: #4a90e2; --bg: #f5f7fa; --card-bg: #ffffff; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { color: #2c3e50; margin-bottom: 5px; }
+        
+        /* 導覽列 */
+        nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 30px; position: sticky; top: 10px; z-index: 100; }
+        nav button { padding: 8px 16px; border: none; border-radius: 20px; background: #ddd; cursor: pointer; transition: 0.3s; }
+        nav button.active { background: var(--p-color); color: white; box-shadow: 0 4px 10px rgba(74,144,226,0.3); }
+
+        /* 卡片網格 */
+        .page-content { display: none; }
+        .page-content.active { display: block; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        
+        .card { background: var(--card-bg); border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.3s; position: relative; }
+        .card:hover { transform: translateY(-5px); }
+        .card-img-container { position: relative; width: 100%; aspect-ratio: 16/9; background: #eee; cursor: zoom-in; }
+        .card-img-container img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .card-body { padding: 15px; }
+        .card-title-input { width: 100%; border: none; font-size: 1.1rem; font-weight: bold; margin-bottom: 8px; outline: none; border-bottom: 2px solid transparent; }
+        .card-title-input:focus { border-bottom: 2px solid var(--p-color); }
+        .card-desc { width: 100%; height: 80px; border: 1px solid #eee; border-radius: 8px; padding: 8px; font-size: 0.9rem; resize: none; box-sizing: border-box; outline: none; }
+        .card-desc:focus { border-color: var(--p-color); }
+        
+        .save-card-btn { margin-top: 10px; width: 100%; padding: 8px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .save-card-btn:hover { background: #5a6268; }
+
+        /* 心得區 */
+        .comment-section { max-width: 1200px; margin: 40px auto; padding: 20px; background: #fff; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        textarea#commentBox { width: 100%; height: 120px; border: 1px solid #ddd; border-radius: 8px; padding: 15px; box-sizing: border-box; font-size: 1rem; margin-top: 10px; }
+        .save-btn { background: #28a745; color: white; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+
+        /* Lightbox & Toast */
+        #lightbox { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:1000; }
+        #lightbox.open { display: flex; }
+        #lb-img { max-width: 90%; max-height: 80%; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 20px; border-radius: 25px; opacity: 0; transition: 0.3s; z-index: 2000; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+<!-- 輸入密碼格 -->
+<div id="auth-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#2c3e50; z-index:9999; display:flex; justify-content:center; align-items:center; flex-direction:column; color:white;">
+    <h2 style="margin-bottom:20px;">🔒 音樂筆記本已鎖定</h2>
+    <div style="display:flex; gap:10px;">
+        <input type="password" id="pw-input" placeholder="輸入密碼?" style="padding:10px; border-radius:5px; border:none; outline:none;">
+        <button onclick="checkPassword()" style="padding:10px 20px; background:#28a745; color:white; border:none; border-radius:5px; cursor:pointer;">開啟</button>
+    </div>
+    <p id="pw-error" style="color:#ff6b6b; margin-top:10px; display:none;">密碼錯誤，請再試一次</p>
+</div>
+
+
+<header>
+    <h1>🎵 我的音樂學習筆記本</h1>
+    <p>100 張音樂練習紀錄 · 雲端即時同步</p>
+</header>
+
+<nav id="nav-bar"></nav>
+<main id="main-content"></main>
+
+<div class="comment-section">
+    <h3>📝 總結與學習心得</h3>
+    <textarea id="commentBox" placeholder="在這裡寫下整體的學習狀況..."></textarea>
+    <button class="save-btn" onclick="saveComment()">儲存心得</button>
+</div>
+
+<div id="lightbox" onclick="closeLB()">
+    <img id="lb-img" src="">
+</div>
+<div id="toast" class="toast">已儲存</div>
+
+
+<!--  設定你的密碼-->
+<script>
+
+const ACCESS_PASSWORD = "999"; // 👈 在這裡設定你的密碼
+
+function checkPassword() {
+    const input = document.getElementById('pw-input').value;
+    const overlay = document.getElementById('auth-overlay');
+    const errorMsg = document.getElementById('pw-error');
+
+    if (input === ACCESS_PASSWORD) {
+        // 密碼正確：移除遮罩
+        overlay.style.display = 'none';
+        // 儲存一個「已登入」狀態在瀏覽器中（下次重整不用再輸入，選用）
+        sessionStorage.setItem('isLoggedIn', 'true');
+    } else {
+        // 密碼錯誤：顯示紅字並清空輸入框
+        errorMsg.style.display = 'block';
+        document.getElementById('pw-input').value = '';
+    }
+}
+
+// 支援按「Enter」鍵直接登入
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && document.getElementById('auth-overlay').style.display !== 'none') {
+        checkPassword();
+    }
+});
+
+
+// ═══════════════════════════════════════════
+// 1. 請在此填入你的 Firebase 新專案資訊 (必填)
+//apiKey: "AIzaSyCxnUafd_whtgo2PYK-CreTYi6WBIwt5i8",
+  //authDomain: "music-note-c67cd.firebaseapp.com",
+  //projectId: "music-note-c67cd",
+// ═══════════════════════════════════════════
+const firebaseConfig = {
+    apiKey: "AIzaSyCxnUafd_whtgo2PYK-CreTYi6WBIwt5i8",
+    authDomain: "music-note-c67cd.firebaseapp.com",
+    projectId: "music-note-c67cd"
+};
+// ═══════════════════════════════════════════
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const PAGE_NAMES = ["樂理基礎", "節奏訓練", "音階練習", "和聲分析", "曲目練習A", "曲目練習B", "創作靈感", "聽力訓練", "大師課筆記", "演出準備"];
+const CARD_EMOJIS = ["🎵", "🎹", "🎼", "🎻", "🎷", "🎸", "🎺", "🎧", "🎤", "✨"];
+const TOTAL_PAGES = 10;
+const CARDS_PER_PAGE = 10;
+
+// 初始化頁面與卡片
+function init() {
+    const nav = document.getElementById('nav-bar');
+    const main = document.getElementById('main-content');
+    
+    for(let p=0; p<TOTAL_PAGES; p++) {
+        // 生成按鈕
+        const btn = document.createElement('button');
+        btn.textContent = PAGE_NAMES[p];
+        btn.onclick = () => switchPage(p);
+        btn.id = `nav-btn-${p}`;
+        nav.appendChild(btn);
+        
+        // 生成頁面容器
+        const pageDiv = document.createElement('div');
+        pageDiv.className = 'page-content';
+        pageDiv.id = `page-${p}`;
+        
+        const grid = document.createElement('div');
+        grid.className = 'card-grid';
+        
+        for(let c=0; c<CARDS_PER_PAGE; c++) {
+            const folderNum = String(p + 1).padStart(2, '0');
+            const fileNum   = String(c + 1).padStart(2, '0');
+            
+            grid.innerHTML += `
+                <div class="card" data-card="${c}">
+                    <div class="card-img-container" onclick="openLB(${p}, ${c})">
+                        <img src="pic${folderNum}/pic_${fileNum}.jpg" onerror="this.src='https://via.placeholder.com/300x170?text=Music+${c+1}'">
+                        <div style="position:absolute; top:10px; left:10px; background:rgba(255,255,255,0.8); padding:2px 8px; border-radius:10px; font-size:12px;">
+                            ${CARD_EMOJIS[c]} No.${c+1}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <input type="text" class="card-title-input" placeholder="輸入練習曲目/主題...">
+                        <textarea class="card-desc" placeholder="輸入進度或筆記..."></textarea>
+                        <button class="save-card-btn" onclick="saveCard(${p}, ${c})">💾 單張儲存</button>
+                    </div>
+                </div>`;
+        }
+        pageDiv.appendChild(grid);
+        main.appendChild(pageDiv);
+    }
+    switchPage(0);
+    loadData();
+    listenUpdates();
+}
+
+function switchPage(idx) {
+    document.querySelectorAll('.page-content, nav button').forEach(el => el.classList.remove('active'));
+    document.getElementById(`page-${idx}`).classList.add('active');
+    document.getElementById(`nav-btn-${idx}`).classList.add('active');
+}
+
+function getCardEl(p, c) { return document.querySelector(`#page-${p} .card[data-card="${c}"]`); }
+
+// Firebase 讀取
+async function loadData() {
+    const snap = await db.collection("music_notebook").doc("main").get();
+    const data = snap.data();
+    if (!data) return;
+    
+    if (data.pages) {
+        for(let p in data.pages) {
+            for(let c in data.pages[p]) {
+                const card = getCardEl(p, c);
+                if(card) {
+                    card.querySelector('.card-title-input').value = data.pages[p][c].title || "";
+                    card.querySelector('.card-desc').value = data.pages[p][c].desc || "";
+                }
+            }
+        }
+    }
+    if (data.comment) document.getElementById('commentBox').value = data.comment;
+}
+
+// Firebase 儲存卡片
+function saveCard(p, c) {
+    const card = getCardEl(p, c);
+    const title = card.querySelector('.card-title-input').value;
+    const desc = card.querySelector('.card-desc').value;
+    
+    db.collection("music_notebook").doc("main").set({
+        pages: { [p]: { [c]: { title, desc } } }
+    }, { merge: true }).then(() => showToast("已同步到雲端！"));
+}
+
+// 儲存總心得
+function saveComment() {
+    const val = document.getElementById('commentBox').value;
+    db.collection("music_notebook").doc("main").set({ comment: val }, { merge: true })
+      .then(() => showToast("總心得儲存成功！"));
+}
+
+// 即時監聽 (多裝置同步關鍵)
+function listenUpdates() {
+    db.collection("music_notebook").doc("main").onSnapshot(snap => {
+        const data = snap.data();
+        if(!data) return;
+        // 這裡可以實作即時更新邏輯，讓另一台電腦也同步跳字
+    });
+}
+
+function openLB(p, c) {
+    const folderNum = String(p + 1).padStart(2, '0');
+    const fileNum   = String(c + 1).padStart(2, '0');
+    document.getElementById('lb-img').src = `pic${folderNum}/pic_${fileNum}.jpg`;
+    document.getElementById('lightbox').classList.add('open');
+}
+function closeLB() { document.getElementById('lightbox').classList.remove('open'); }
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.opacity = "1";
+    setTimeout(() => t.style.opacity = "0", 2000);
+}
+
+//原始程式 window.onload = init;(修改成再登入不用打密碼)
+window.onload = function() {
+    // 檢查這一次瀏覽器開啟期間是否已經輸入過密碼
+    if (sessionStorage.getItem('isLoggedIn') === 'true') {
+        document.getElementById('auth-overlay').style.display = 'none';
+    }
+    init(); // 原本的初始化函式
+};
+
+
+</script>
+</body>
+</html>
