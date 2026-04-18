@@ -326,13 +326,43 @@ function showToast(msg) {
 }
 
 //原始程式 window.onload = init;(修改成再登入不用打密碼)
+const ACCESS_PASSWORD = "你的密碼"; 
+
 window.onload = function() {
-    // 檢查這一次瀏覽器開啟期間是否已經輸入過密碼
-    if (sessionStorage.getItem('isLoggedIn') === 'true') {
-        document.getElementById('auth-overlay').style.display = 'none';
+    // 1. 先執行 UI 生成（卡片等）
+    try {
+        init(); 
+    } catch (e) {
+        console.error("初始化失敗:", e);
     }
-    init(); // 原本的初始化函式
+
+    // 2. 檢查密碼狀態
+    const overlay = document.getElementById('auth-overlay');
+    if (sessionStorage.getItem('isLoggedIn') === 'true') {
+        overlay.style.display = 'none';
+    } else {
+        // 強制確保遮罩是顯示的，且在最上層
+        overlay.style.display = 'flex';
+    }
 };
+
+function checkPassword() {
+    const input = document.getElementById('pw-input').value;
+    const overlay = document.getElementById('auth-overlay');
+    const errorMsg = document.getElementById('pw-error');
+
+    if (input === ACCESS_PASSWORD) {
+        overlay.style.display = 'none';
+        sessionStorage.setItem('isLoggedIn', 'true');
+        // 密碼正確後，稍微捲動一下頁面，解決部分手機瀏覽器渲染殘留問題
+        window.scrollTo(0, 0);
+    } else {
+        errorMsg.style.display = 'block';
+        document.getElementById('pw-input').value = '';
+        // 震動回饋 (手機支援的話)
+        if (navigator.vibrate) navigator.vibrate(200);
+    }
+}
 
 
 </script>
