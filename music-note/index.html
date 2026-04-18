@@ -22,48 +22,101 @@ service cloud.firestore {
     <title>大家的音樂筆記</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    
+    <!-- 
+	
+-->
     <style>
-        /* 🎨 完整的 CSS 介面樣式 */
-        :root { --p-color: #4a90e2; --bg: #f5f7fa; --card-bg: #ffffff; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
-        header { text-align: center; margin-bottom: 30px; }
-        h1 { color: #2c3e50; margin-bottom: 5px; }
-        
-        /* 導覽列 */
-        nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 30px; position: sticky; top: 10px; z-index: 100; }
-        nav button { padding: 8px 16px; border: none; border-radius: 20px; background: #ddd; cursor: pointer; transition: 0.3s; }
-        nav button.active { background: var(--p-color); color: white; box-shadow: 0 4px 10px rgba(74,144,226,0.3); }
+	
+       /* 📱 手機版 RWD 優化 */
+:root { 
+    --p-color: #4a90e2; 
+    --bg: #f5f7fa; 
+    --card-bg: #ffffff; 
+}
 
-        /* 卡片網格 */
-        .page-content { display: none; }
-        .page-content.active { display: block; }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
-        
-        .card { background: var(--card-bg); border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.3s; position: relative; }
-        .card:hover { transform: translateY(-5px); }
-        .card-img-container { position: relative; width: 100%; aspect-ratio: 16/9; background: #eee; cursor: zoom-in; }
-        .card-img-container img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .card-body { padding: 15px; }
-        .card-title-input { width: 100%; border: none; font-size: 1.1rem; font-weight: bold; margin-bottom: 8px; outline: none; border-bottom: 2px solid transparent; }
-        .card-title-input:focus { border-bottom: 2px solid var(--p-color); }
-        .card-desc { width: 100%; height: 80px; border: 1px solid #eee; border-radius: 8px; padding: 8px; font-size: 0.9rem; resize: none; box-sizing: border-box; outline: none; }
-        .card-desc:focus { border-color: var(--p-color); }
-        
-        .save-card-btn { margin-top: 10px; width: 100%; padding: 8px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        .save-card-btn:hover { background: #5a6268; }
+body { 
+    font-family: 'Segoe UI', system-ui, sans-serif; 
+    background: var(--bg); 
+    margin: 0; 
+    padding: 10px; /* 手機版邊距縮小，增加空間 */
+    color: #333; 
+}
 
-        /* 心得區 */
-        .comment-section { max-width: 1200px; margin: 40px auto; padding: 20px; background: #fff; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        textarea#commentBox { width: 100%; height: 120px; border: 1px solid #ddd; border-radius: 8px; padding: 15px; box-sizing: border-box; font-size: 1rem; margin-top: 10px; }
-        .save-btn { background: #28a745; color: white; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+header h1 { 
+    font-size: 1.5rem; /* 縮小手機標題 */
+    margin-top: 15px;
+}
 
-        /* Lightbox & Toast */
-        #lightbox { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:1000; }
-        #lightbox.open { display: flex; }
-        #lb-img { max-width: 90%; max-height: 80%; }
-        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 20px; border-radius: 25px; opacity: 0; transition: 0.3s; z-index: 2000; pointer-events: none; }
+    /* 🧭 導覽列：改成手機橫向滑動（核心改動） */
+nav { 
+    display: flex; 
+    flex-wrap: nowrap; /* 強制不換行 */
+    overflow-x: auto;  /* 允許左右滑動 */
+    -webkit-overflow-scrolling: touch; /* 讓 iOS 滑動更順暢 */
+    gap: 10px; 
+    padding: 10px 5px;
+    margin-bottom: 20px; 
+    position: sticky; 
+    top: 0; 
+    z-index: 100;
+    background: var(--bg); /* 滑動時背景不透明 */
+}
+
+/* 隱藏捲軸（美化） */
+nav::-webkit-scrollbar { display: none; }
+
+nav button { 
+    flex: 0 0 auto; /* 防止按鈕被壓縮 */
+    padding: 8px 20px; 
+    border-radius: 25px; 
+    white-space: nowrap; /* 文字不折行 */
+    border: none;
+    background: #e0e0e0;
+}
+
+/* 📦 卡片網格：手機一排一個，平板以上一排多個 */
+.card-grid { 
+    display: grid; 
+    grid-template-columns: 1fr; /* 預設一排一張 */
+    gap: 15px; 
+    max-width: 1200px; 
+    margin: 0 auto; 
+}
+
+/* 當螢幕寬度大於 600px (平板) */
+@media (min-width: 600px) {
+    .card-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* 當螢幕寬度大於 1000px (電腦) */
+@media (min-width: 1000px) {
+    .card-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* 📝 輸入區域優化 */
+.card-body { padding: 20px; } /* 增加點擊空間 */
+.card-title-input { font-size: 1.2rem; }
+.card-desc { 
+    font-size: 1rem; /* 手機輸入框字體不能小於 16px (1rem)，否則 iOS 會自動放大畫面 */
+    height: 100px; 
+}
+
+.save-card-btn { 
+    padding: 12px; /* 按鈕加高，方便手指點擊 */
+    font-size: 1rem;
+}
+
+/* 🔒 密碼畫面優化 */
+#auth-overlay input {
+    width: 60%;
+    font-size: 1.2rem;
+}
+
+/* 🖼️ Lightbox 在手機上全螢幕 */
+#lb-img { 
+    width: 100%; 
+    height: auto; 
+}
     </style>
 </head>
 <body>
