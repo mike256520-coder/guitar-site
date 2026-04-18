@@ -1,147 +1,358 @@
 <!DOCTYPE html>
 <!-- damie 
          ANE0N-LZ7HA-9Y4IT-DBKA3-K7NIQ -->
-<!-- ai對話 https://gemini.google.com/share/6ab2179aeada
-                     https://gemini.google.com/share/5873945bfcc1-->
-<!-- 資料庫規則:
-rules_version = '2';
-
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2026, 5, 17);
-    }
-  }
-}
--->
-<!DOCTYPE html>
+<!-- index-原始版加id全能ok版.html -->
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大家的音樂筆記</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>我的音樂學習筆記本</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <!-- 
-	
--->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
     <style>
-	
-       /* 📱 手機版 RWD 優化 */
-:root { 
-    --p-color: #4a90e2; 
-    --bg: #f5f7fa; 
-    --card-bg: #ffffff; 
-}
+        :root {
+            --p-color: #4a90e2;
+            --p-dark: #2f6fc1;
+            --bg: #f0f4f9;
+            --card-bg: #ffffff;
+            --text: #2c3e50;
+            --sub: #7f8c9a;
+            --border: #e0e7ef;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
 
-body { 
-    font-family: 'Segoe UI', system-ui, sans-serif; 
-    background: var(--bg); 
-    margin: 0; 
-    padding: 10px; /* 手機版邊距縮小，增加空間 */
-    color: #333; 
-}
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-header h1 { 
-    font-size: 1.5rem; /* 縮小手機標題 */
-    margin-top: 15px;
-}
+        body {
+            font-family: 'Noto Sans TC', 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+            padding-bottom: calc(70px + var(--safe-bottom));
+        }
 
-    /* 🧭 導覽列：改成手機橫向滑動（核心改動） */
-nav { 
-    display: flex; 
-    flex-wrap: nowrap; /* 強制不換行 */
-    overflow-x: auto;  /* 允許左右滑動 */
-    -webkit-overflow-scrolling: touch; /* 讓 iOS 滑動更順暢 */
-    gap: 10px; 
-    padding: 10px 5px;
-    margin-bottom: 20px; 
-    position: sticky; 
-    top: 0; 
-    z-index: 100;
-    background: var(--bg); /* 滑動時背景不透明 */
-}
+        /* ── Header ── */
+        header {
+            background: linear-gradient(135deg, #1a3a6e 0%, #2f6fc1 60%, #4a90e2 100%);
+            color: white;
+            padding: 20px 16px 16px;
+            text-align: center;
+        }
+        header h1 {
+            margin: 0 0 4px;
+            font-size: clamp(1.2rem, 5vw, 1.6rem);
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
+        header p {
+            margin: 0;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
 
-/* 隱藏捲軸（美化） */
-nav::-webkit-scrollbar { display: none; }
+        /* ── 頁籤導覽（手機橫向捲動） ── */
+        #nav-wrapper {
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        nav {
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding: 0 8px;
+            gap: 4px;
+        }
+        nav::-webkit-scrollbar { display: none; }
+        nav button {
+            flex-shrink: 0;
+            padding: 10px 14px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-family: inherit;
+            color: var(--sub);
+            border-bottom: 3px solid transparent;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        nav button.active {
+            color: var(--p-color);
+            border-bottom-color: var(--p-color);
+            font-weight: 700;
+        }
 
-nav button { 
-    flex: 0 0 auto; /* 防止按鈕被壓縮 */
-    padding: 8px 20px; 
-    border-radius: 25px; 
-    white-space: nowrap; /* 文字不折行 */
-    border: none;
-    background: #e0e0e0;
-}
+        /* ── 頁面容器 ── */
+        .page-content { display: none; }
+        .page-content.active { display: block; }
 
-/* 📦 卡片網格：手機一排一個，平板以上一排多個 */
-.card-grid { 
-    display: grid; 
-    grid-template-columns: 1fr; /* 預設一排一張 */
-    gap: 15px; 
-    max-width: 1200px; 
-    margin: 0 auto; 
-}
+        /* ── 頁面標題 ── */
+        .page-heading {
+            padding: 16px 16px 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .page-heading span { color: var(--p-color); }
 
-/* 當螢幕寬度大於 600px (平板) */
-@media (min-width: 600px) {
-    .card-grid { grid-template-columns: repeat(2, 1fr); }
-}
+        /* ── 卡片網格 ── */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 14px;
+            padding: 0 16px 16px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-/* 當螢幕寬度大於 1000px (電腦) */
-@media (min-width: 1000px) {
-    .card-grid { grid-template-columns: repeat(3, 1fr); }
-}
+        /* 手機：強制單欄 */
+        @media (max-width: 480px) {
+            .card-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+        }
 
-/* 📝 輸入區域優化 */
-.card-body { padding: 20px; } /* 增加點擊空間 */
-.card-title-input { font-size: 1.2rem; }
-.card-desc { 
-    font-size: 1rem; /* 手機輸入框字體不能小於 16px (1rem)，否則 iOS 會自動放大畫面 */
-    height: 100px; 
-}
+        /* ── 卡片 ── */
+        .card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        @media (hover: hover) {
+            .card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+        }
 
-.save-card-btn { 
-    padding: 12px; /* 按鈕加高，方便手指點擊 */
-    font-size: 1rem;
-}
+        /* ── 圖片區 ── */
+        .card-img-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #dce5f0;
+            cursor: zoom-in;
+            overflow: hidden;
+        }
+        .card-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+        .card-img-container:active img { transform: scale(1.03); }
+        .card-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(4px);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
 
-/* 🔒 密碼畫面優化 */
-#auth-overlay input {
-    width: 60%;
-    font-size: 1.2rem;
-}
+        /* ── 卡片內容 ── */
+        .card-body { padding: 14px; }
+        .card-title-input {
+            width: 100%;
+            border: none;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
+            color: var(--text);
+            margin-bottom: 10px;
+            outline: none;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.2s;
+            background: transparent;
+            padding: 2px 0;
+        }
+        .card-title-input:focus { border-bottom-color: var(--p-color); }
+        .card-desc {
+            width: 100%;
+            height: 80px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.88rem;
+            font-family: inherit;
+            color: var(--text);
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+            background: #fafbfc;
+        }
+        .card-desc:focus { border-color: var(--p-color); background: #fff; }
+        .save-card-btn {
+            margin-top: 10px;
+            width: 100%;
+            padding: 10px;
+            background: #5a6268;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-family: inherit;
+            font-weight: 500;
+            transition: background 0.2s;
+            /* 觸控優化 */
+            min-height: 44px;
+        }
+        .save-card-btn:active { background: #3d4347; }
 
-/* 🖼️ Lightbox 在手機上全螢幕 */
-#lb-img { 
-    width: 100%; 
-    height: auto; 
-}
+        /* ── 心得區 ── */
+        .comment-section {
+            max-width: 1200px;
+            margin: 8px 16px 16px;
+            padding: 18px;
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+        }
+        .comment-section h3 { margin: 0 0 10px; font-size: 0.98rem; }
+        textarea#commentBox {
+            width: 100%;
+            height: 110px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            box-sizing: border-box;
+            font-size: 0.92rem;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+            background: #fafbfc;
+        }
+        textarea#commentBox:focus { border-color: var(--p-color); background: #fff; }
+        .save-btn {
+            background: var(--p-color);
+            color: white;
+            border: none;
+            padding: 11px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 0.92rem;
+            font-family: inherit;
+            font-weight: 600;
+            min-height: 44px;
+            transition: background 0.2s;
+        }
+        .save-btn:active { background: var(--p-dark); }
+
+        /* ── Lightbox ── */
+        #lightbox {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.92);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+        #lightbox.open { display: flex; }
+        #lb-img {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: 6px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+        }
+        #lb-close {
+            position: absolute;
+            top: 16px; right: 16px;
+            width: 40px; height: 40px;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: calc(80px + var(--safe-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a2a3a;
+            color: #fff;
+            padding: 10px 22px;
+            border-radius: 25px;
+            font-size: 0.88rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 8000;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        /* ── 底部固定列（頁碼快速跳轉，手機用） ── */
+        #bottom-bar {
+            display: none;
+        }
+        @media (max-width: 640px) {
+            #bottom-bar {
+                display: flex;
+                position: fixed;
+                bottom: 0; left: 0; right: 0;
+                height: calc(56px + var(--safe-bottom));
+                padding-bottom: var(--safe-bottom);
+                background: #fff;
+                border-top: 1px solid var(--border);
+                align-items: center;
+                justify-content: space-around;
+                z-index: 200;
+                box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+            }
+            #bottom-bar button {
+                flex: 1;
+                border: none;
+                background: none;
+                font-size: 0.7rem;
+                font-family: inherit;
+                color: var(--sub);
+                cursor: pointer;
+                padding: 6px 2px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 2px;
+                transition: color 0.2s;
+            }
+            #bottom-bar button .bb-icon { font-size: 1.3rem; }
+            #bottom-bar button.active { color: var(--p-color); font-weight: 700; }
+        }
     </style>
 </head>
 <body>
 
-<!-- 輸入密碼格 -->
-<div id="auth-overlay" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:#1a252f; z-index:10000; display:flex; justify-content:center; align-items:center; flex-direction:column; color:white; padding:20px; box-sizing:border-box;">
-    <div style="text-align:center; width:100%; max-width:300px;">
-        <h2 style="margin-bottom:20px; font-size:1.4rem;">🔒 音樂筆記本已鎖定</h2>
-        <input type="password" id="pw-input" placeholder="請輸入密碼" 
-               style="width:100%; padding:15px; border-radius:10px; border:none; outline:none; font-size:1.2rem; margin-bottom:15px; box-sizing:border-box; text-align:center;">
-        <button onclick="checkPassword()" 
-                style="width:100%; padding:15px; background:#28a745; color:white; border:none; border-radius:10px; cursor:pointer; font-size:1.1rem; font-weight:bold;">
-            開啟筆記本
-        </button>
-        <p id="pw-error" style="color:#ff6b6b; margin-top:15px; display:none; font-weight:bold;">密碼錯誤，請再試一次</p>
-    </div>
-</div>
-
-
 <header>
-    <h1>🎵 大家的音樂筆記</h1>
-    <p>點進去加入心得 · 雲端即時同步</p>
+    <h1>🎵 我的音樂學習筆記本</h1>
+    <p>100 張音樂練習紀錄 · 雲端即時同步</p>
 </header>
 
-<nav id="nav-bar"></nav>
+<div id="nav-wrapper">
+    <nav id="nav-bar"></nav>
+</div>
+
 <main id="main-content"></main>
 
 <div class="comment-section">
@@ -150,163 +361,160 @@ nav button {
     <button class="save-btn" onclick="saveComment()">儲存心得</button>
 </div>
 
+<!-- 手機底部快捷列 -->
+<div id="bottom-bar" id="bottom-bar-el"></div>
+
 <div id="lightbox" onclick="closeLB()">
-    <img id="lb-img" src="">
+    <button id="lb-close" onclick="closeLB()">✕</button>
+    <img id="lb-img" src="" onclick="event.stopPropagation()">
 </div>
 <div id="toast" class="toast">已儲存</div>
 
-
-<!--  設定你的密碼-->
 <script>
-
-const ACCESS_PASSWORD = "999"; // 👈 在這裡設定你的密碼
-
-function checkPassword() {
-    const input = document.getElementById('pw-input').value;
-    const overlay = document.getElementById('auth-overlay');
-    const errorMsg = document.getElementById('pw-error');
-
-    if (input === ACCESS_PASSWORD) {
-        // 密碼正確：移除遮罩
-        overlay.style.display = 'none';
-        // 儲存一個「已登入」狀態在瀏覽器中（下次重整不用再輸入，選用）
-        sessionStorage.setItem('isLoggedIn', 'true');
-    } else {
-        // 密碼錯誤：顯示紅字並清空輸入框
-        errorMsg.style.display = 'block';
-        document.getElementById('pw-input').value = '';
-    }
-}
-
-// 支援按「Enter」鍵直接登入
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && document.getElementById('auth-overlay').style.display !== 'none') {
-        checkPassword();
-    }
-});
-
-
-// ═══════════════════════════════════════════
-// 1. 請在此填入你的 Firebase 新專案資訊 (必填)
-//apiKey: "AIzaSyCxnUafd_whtgo2PYK-CreTYi6WBIwt5i8",
-  //authDomain: "music-note-c67cd.firebaseapp.com",
-  //projectId: "music-note-c67cd",
-// ═══════════════════════════════════════════
 const firebaseConfig = {
     apiKey: "AIzaSyCxnUafd_whtgo2PYK-CreTYi6WBIwt5i8",
     authDomain: "music-note-c67cd.firebaseapp.com",
     projectId: "music-note-c67cd"
 };
-// ═══════════════════════════════════════════
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-const PAGE_NAMES = ["樂理基礎", "節奏訓練", "音階練習", "和聲分析", "曲目練習A", "曲目練習B", "創作靈感", "聽力訓練", "大師課筆記", "演出準備"];
-const CARD_EMOJIS = ["🎵", "🎹", "🎼", "🎻", "🎷", "🎸", "🎺", "🎧", "🎤", "✨"];
-const TOTAL_PAGES = 10;
+const PAGE_NAMES = ["樂理基礎","節奏訓練","音階練習","和聲分析","曲目練習A","曲目練習B","創作靈感","聽力訓練","大師課筆記","演出準備"];
+const CARD_EMOJIS = ["🎵","🎹","🎼","🎻","🎷","🎸","🎺","🎧","🎤","✨"];
+const BB_ICONS    = ["📖","🥁","🎼","🎶","🅐","🅑","💡","👂","📝","🌟"];
+const TOTAL_PAGES  = 10;
 const CARDS_PER_PAGE = 10;
 
-// 初始化頁面與卡片
+let currentPage = 0;
+
 function init() {
-    const nav = document.getElementById('nav-bar');
-    const main = document.getElementById('main-content');
-    
-    for(let p=0; p<TOTAL_PAGES; p++) {
-        // 生成按鈕
+    const nav    = document.getElementById('nav-bar');
+    const main   = document.getElementById('main-content');
+    const bb     = document.getElementById('bottom-bar');
+
+    for (let p = 0; p < TOTAL_PAGES; p++) {
+        // ── 頂部頁籤 ──
         const btn = document.createElement('button');
         btn.textContent = PAGE_NAMES[p];
         btn.onclick = () => switchPage(p);
         btn.id = `nav-btn-${p}`;
         nav.appendChild(btn);
-        
-        // 生成頁面容器
+
+        // ── 底部快捷列（只顯示前5和後5） ──
+        const bbBtn = document.createElement('button');
+        bbBtn.innerHTML = `<span class="bb-icon">${BB_ICONS[p]}</span><span>${PAGE_NAMES[p].substring(0,3)}</span>`;
+        bbBtn.onclick = () => switchPage(p);
+        bbBtn.id = `bb-btn-${p}`;
+        bb.appendChild(bbBtn);
+
+        // ── 卡片頁 ──
         const pageDiv = document.createElement('div');
         pageDiv.className = 'page-content';
         pageDiv.id = `page-${p}`;
-        
+
+        const heading = document.createElement('div');
+        heading.className = 'page-heading';
+        heading.innerHTML = `第 <span>${p+1}</span> 章 · ${PAGE_NAMES[p]}`;
+        pageDiv.appendChild(heading);
+
         const grid = document.createElement('div');
         grid.className = 'card-grid';
-        
-        for(let c=0; c<CARDS_PER_PAGE; c++) {
+
+        for (let c = 0; c < CARDS_PER_PAGE; c++) {
             const folderNum = String(p + 1).padStart(2, '0');
             const fileNum   = String(c + 1).padStart(2, '0');
-            
-            grid.innerHTML += `
-                <div class="card" data-card="${c}">
-                    <div class="card-img-container" onclick="openLB(${p}, ${c})">
-                        <img src="pic${folderNum}/pic_${fileNum}.jpg" onerror="this.src='https://via.placeholder.com/300x170?text=Music+${c+1}'">
-                        <div style="position:absolute; top:10px; left:10px; background:rgba(255,255,255,0.8); padding:2px 8px; border-radius:10px; font-size:12px;">
-                            ${CARD_EMOJIS[c]} No.${c+1}
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <input type="text" class="card-title-input" placeholder="輸入練習曲目/主題...">
-                        <textarea class="card-desc" placeholder="輸入進度或筆記..."></textarea>
-                        <button class="save-card-btn" onclick="saveCard(${p}, ${c})">💾 單張儲存</button>
-                    </div>
+            const cardEl = document.createElement('div');
+            cardEl.className = 'card';
+            cardEl.dataset.card = c;
+            cardEl.innerHTML = `
+                <div class="card-img-container" onclick="openLB(${p}, ${c})">
+                    <img src="pic${folderNum}/pic_${fileNum}.jpg"
+                         onerror="this.src='https://via.placeholder.com/400x225/dce5f0/4a90e2?text=%F0%9F%8E%B5+${c+1}'"
+                         loading="lazy">
+                    <div class="card-badge">${CARD_EMOJIS[c]} No.${p*10+c+1}</div>
+                </div>
+                <div class="card-body">
+                    <input type="text" class="card-title-input" placeholder="輸入練習曲目／主題…">
+                    <textarea class="card-desc" placeholder="輸入進度或筆記…"></textarea>
+                    <button class="save-card-btn" onclick="saveCard(${p}, ${c})">💾 儲存此卡片</button>
                 </div>`;
+            grid.appendChild(cardEl);
         }
         pageDiv.appendChild(grid);
         main.appendChild(pageDiv);
     }
+
     switchPage(0);
     loadData();
     listenUpdates();
+
+    // 手機底部列：只在 ≤640px 時顯示，且捲動時隱藏 lightbox
+    document.addEventListener('touchstart', () => {});
 }
 
 function switchPage(idx) {
-    document.querySelectorAll('.page-content, nav button').forEach(el => el.classList.remove('active'));
+    currentPage = idx;
+    document.querySelectorAll('.page-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('nav button, #bottom-bar button').forEach(el => el.classList.remove('active'));
     document.getElementById(`page-${idx}`).classList.add('active');
     document.getElementById(`nav-btn-${idx}`).classList.add('active');
+    const bbBtn = document.getElementById(`bb-btn-${idx}`);
+    if (bbBtn) bbBtn.classList.add('active');
+
+    // 把頁籤捲到可見範圍
+    const activeNavBtn = document.getElementById(`nav-btn-${idx}`);
+    activeNavBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+    // 捲回頂部
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function getCardEl(p, c) { return document.querySelector(`#page-${p} .card[data-card="${c}"]`); }
+function getCardEl(p, c) {
+    return document.querySelector(`#page-${p} .card[data-card="${c}"]`);
+}
 
-// Firebase 讀取
 async function loadData() {
-    const snap = await db.collection("music_notebook").doc("main").get();
-    const data = snap.data();
-    if (!data) return;
-    
-    if (data.pages) {
-        for(let p in data.pages) {
-            for(let c in data.pages[p]) {
-                const card = getCardEl(p, c);
-                if(card) {
-                    card.querySelector('.card-title-input').value = data.pages[p][c].title || "";
-                    card.querySelector('.card-desc').value = data.pages[p][c].desc || "";
+    try {
+        const snap = await db.collection("music_notebook").doc("main").get();
+        const data = snap.data();
+        if (!data) return;
+        if (data.pages) {
+            for (let p in data.pages) {
+                for (let c in data.pages[p]) {
+                    const card = getCardEl(p, c);
+                    if (card) {
+                        card.querySelector('.card-title-input').value = data.pages[p][c].title || "";
+                        card.querySelector('.card-desc').value         = data.pages[p][c].desc  || "";
+                    }
                 }
             }
         }
-    }
-    if (data.comment) document.getElementById('commentBox').value = data.comment;
+        if (data.comment) document.getElementById('commentBox').value = data.comment;
+    } catch(e) { console.warn("loadData error:", e); }
 }
 
-// Firebase 儲存卡片
 function saveCard(p, c) {
-    const card = getCardEl(p, c);
+    const card  = getCardEl(p, c);
     const title = card.querySelector('.card-title-input').value;
-    const desc = card.querySelector('.card-desc').value;
-    
+    const desc  = card.querySelector('.card-desc').value;
     db.collection("music_notebook").doc("main").set({
         pages: { [p]: { [c]: { title, desc } } }
-    }, { merge: true }).then(() => showToast("已同步到雲端！"));
+    }, { merge: true }).then(() => showToast("✅ 已同步到雲端！"));
 }
 
-// 儲存總心得
 function saveComment() {
     const val = document.getElementById('commentBox').value;
-    db.collection("music_notebook").doc("main").set({ comment: val }, { merge: true })
-      .then(() => showToast("總心得儲存成功！"));
+    db.collection("music_notebook").doc("main").set(
+        { comment: val }, { merge: true }
+    ).then(() => showToast("✅ 總心得儲存成功！"));
 }
 
-// 即時監聽 (多裝置同步關鍵)
 function listenUpdates() {
     db.collection("music_notebook").doc("main").onSnapshot(snap => {
         const data = snap.data();
-        if(!data) return;
-        // 這裡可以實作即時更新邏輯，讓另一台電腦也同步跳字
+        if (!data) return;
+        // 可在此加入多裝置即時同步 UI 更新邏輯
     });
 }
 
@@ -315,56 +523,24 @@ function openLB(p, c) {
     const fileNum   = String(c + 1).padStart(2, '0');
     document.getElementById('lb-img').src = `pic${folderNum}/pic_${fileNum}.jpg`;
     document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
 }
-function closeLB() { document.getElementById('lightbox').classList.remove('open'); }
+function closeLB() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+}
 
 function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.style.opacity = "1";
-    setTimeout(() => t.style.opacity = "0", 2000);
+    setTimeout(() => t.style.opacity = "0", 2500);
 }
 
-//原始程式 window.onload = init;(修改成再登入不用打密碼)
-const ACCESS_PASSWORD = "你的密碼"; 
+// 鍵盤 ESC 關閉 lightbox
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLB(); });
 
-window.onload = function() {
-    // 1. 先執行 UI 生成（卡片等）
-    try {
-        init(); 
-    } catch (e) {
-        console.error("初始化失敗:", e);
-    }
-
-    // 2. 檢查密碼狀態
-    const overlay = document.getElementById('auth-overlay');
-    if (sessionStorage.getItem('isLoggedIn') === 'true') {
-        overlay.style.display = 'none';
-    } else {
-        // 強制確保遮罩是顯示的，且在最上層
-        overlay.style.display = 'flex';
-    }
-};
-
-function checkPassword() {
-    const input = document.getElementById('pw-input').value;
-    const overlay = document.getElementById('auth-overlay');
-    const errorMsg = document.getElementById('pw-error');
-
-    if (input === ACCESS_PASSWORD) {
-        overlay.style.display = 'none';
-        sessionStorage.setItem('isLoggedIn', 'true');
-        // 密碼正確後，稍微捲動一下頁面，解決部分手機瀏覽器渲染殘留問題
-        window.scrollTo(0, 0);
-    } else {
-        errorMsg.style.display = 'block';
-        document.getElementById('pw-input').value = '';
-        // 震動回饋 (手機支援的話)
-        if (navigator.vibrate) navigator.vibrate(200);
-    }
-}
-
-
+window.onload = init;
 </script>
 </body>
 </html>
